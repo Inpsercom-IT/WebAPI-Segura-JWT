@@ -11,18 +11,18 @@ namespace WebApiSegura.Controllers
     /// login controller class for authenticate users
     /// </summary>
     [AllowAnonymous]
-    [RoutePrefix("api/login")]
+    [RoutePrefix("api/test/login")] //fima de acceso al api (URL q se arma)
     public class LoginController : ApiController
     {
         [HttpGet]
         [Route("echoping")]
         public IHttpActionResult EchoPing()
         {
-            return Ok(true);
+            return Ok("hola mundo");
         }
 
-        [HttpGet]
-        [Route("echouser")]
+        [HttpGet,HttpPut,HttpDelete,HttpPatch] //patch se usa para actualizar
+        [Route("echouser")] // punto final de la URL
         public IHttpActionResult EchoUser()
         {
             var identity = Thread.CurrentPrincipal.Identity;
@@ -55,7 +55,7 @@ namespace WebApiSegura.Controllers
             }
 
             //TODO: This code is only for demo - extract method in new class & validate correctly in your application !!
-            var isAdminValid = (login.Username == "admin" && login.Password == "123456");
+            var isAdminValid = (login.Username == "IPSCR" && login.Password == "qwerty123");
             if (isAdminValid)
             {
                 var rolename = "Administrator";

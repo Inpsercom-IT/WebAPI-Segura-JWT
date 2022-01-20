@@ -66,7 +66,7 @@ namespace WebApiSegura.Security
 
                 return base.SendAsync(request, cancellationToken);
             }
-            catch (SecurityTokenValidationException)
+            catch (SecurityTokenValidationException e)
             {
                 statusCode = HttpStatusCode.Unauthorized;
             }
