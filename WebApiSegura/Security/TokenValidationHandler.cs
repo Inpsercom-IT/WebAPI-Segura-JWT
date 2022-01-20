@@ -4,6 +4,7 @@ using System.Configuration;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
@@ -31,9 +32,9 @@ namespace WebApiSegura.Security
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            HttpStatusCode statusCode;
+            
             string token;
-
+            HttpStatusCode statusCode = HttpStatusCode.Unauthorized;
             // determine whether a jwt exists or not
             if (!TryRetrieveToken(request, out token))
             {
@@ -50,6 +51,7 @@ namespace WebApiSegura.Security
 
                 SecurityToken securityToken;
                 var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+                
                 TokenValidationParameters validationParameters = new TokenValidationParameters()
                 {
                     ValidAudience = audienceToken,
@@ -59,12 +61,19 @@ namespace WebApiSegura.Security
                     LifetimeValidator = this.LifetimeValidator,
                     IssuerSigningKey = securityKey
                 };
-
-                // Extract and assign Current Principal and user
-                Thread.CurrentPrincipal = tokenHandler.ValidateToken(token, validationParameters, out securityToken);
-                HttpContext.Current.User = tokenHandler.ValidateToken(token, validationParameters, out securityToken);
-
-                return base.SendAsync(request, cancellationToken);
+                if (tokenHandler.CanReadToken(token))
+                {
+                    var user = tokenHandler.ValidateToken(token, validationParameters, out securityToken);
+                    string roles = user.Claims.FirstOrDefault(d=> d.Type == ClaimTypes.Role)?.Value;
+                    if (roles == null) return Task<HttpResponseMessage>.Factory.StartNew(() => new HttpResponseMessage() { StatusCode = HttpStatusCode.NotFound });
+                    else
+                    {
+                        Thread.CurrentPrincipal = tokenHandler.ValidateToken(token, validationParameters, out securityToken);
+                        HttpContext.Current.User = tokenHandler.ValidateToken(token, validationParameters, out securityToken);
+                        HttpContext.Current.User.IsInRole(roles);
+                        return base.SendAsync(request, cancellationToken);
+                    }
+                }
             }
             catch (SecurityTokenValidationException e)
             {
@@ -75,7 +84,7 @@ namespace WebApiSegura.Security
                 statusCode = HttpStatusCode.InternalServerError;
             }
 
-            return Task<HttpResponseMessage>.Factory.StartNew(() => new HttpResponseMessage(statusCode) { });
+            return Task<HttpResponseMessage>.Factory.StartNew(() => new HttpResponseMessage() { StatusCode = statusCode });
         }
 
         public bool LifetimeValidator(DateTime? notBefore, DateTime? expires, SecurityToken securityToken, TokenValidationParameters validationParameters)

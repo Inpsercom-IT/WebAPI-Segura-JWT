@@ -11,6 +11,7 @@
     <ProjectGuid>{6730CA63-BA54-433B-A4A6-DC5A34B7DFA4}</ProjectGuid>
     <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
     <OutputType>Library</OutputType>
+	  <LangVersion>6</LangVersion>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>WebApiSegura</RootNamespace>
     <AssemblyName>WebApiSegura</AssemblyName>
